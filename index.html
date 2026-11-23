@@ -241,11 +241,7 @@ footer{padding:40px max(5vw,16px);border-top:1px solid var(--line);color:var(--m
       </div>
       <form class="card" id="spform" novalidate>
         <div class="ticket">旅の応援乗車券</div>
-        <p>金額と支援のかたちを選んでください。</p>
-        <fieldset class="seg"><legend>支援のかたち</legend>
-          <label><input type="radio" name="kind" value="once" checked><span>1回だけ</span></label>
-          <label><input type="radio" name="kind" value="month"><span>毎月</span></label>
-        </fieldset>
+        <p>金額を選んでください。1回だけのご支援です。</p>
         <fieldset class="amts"><legend>金額</legend>
           <label><input type="radio" name="amt" value="300"><span>300円</span></label>
           <label><input type="radio" name="amt" value="500" checked><span>500円</span></label>
@@ -253,9 +249,9 @@ footer{padding:40px max(5vw,16px);border-top:1px solid var(--line);color:var(--m
           <label><input type="radio" name="amt" value="free"><span>自由</span></label>
         </fieldset>
         <label class="free" id="freebox" hidden>金額（円）<input type="number" id="freeamt" min="100" step="100" inputmode="numeric" placeholder="例：2000"></label>
-        <p class="sum" id="spsum">1回だけ・500円</p>
+        <p class="sum" id="spsum">500円</p>
         <button class="btn p" id="spbtn" type="submit">支援ページへ進む</button>
-        <p class="note" id="spnote" role="status">支援の受付はただいま準備中です。開始したらDiscordとこのページでお知らせします。</p>
+        <p class="note" id="spnote" role="status">支援の受付はただいま準備中です。</p>
       </form>
     </div>
     </div>
@@ -279,7 +275,7 @@ footer{padding:40px max(5vw,16px);border-top:1px solid var(--line);color:var(--m
   else if (LINKS.discord) ln.textContent = "事前登録のリンクは準備中です。";
 
   // 支援の受付：ケースワーカーに確認してから open を true にし、url に支援サービスのリンクを入れる
-  const SUPPORT = { open: false, url: "" };
+  const SUPPORT = { open: true, url: "https://form.jotform.com/263265749013055" };
   const f = document.getElementById("spform"), sum = document.getElementById("spsum"), btn = document.getElementById("spbtn");
   const freebox = document.getElementById("freebox"), freeamt = document.getElementById("freeamt"), note = document.getElementById("spnote");
   const ready = SUPPORT.open && SUPPORT.url;
@@ -289,7 +285,7 @@ footer{padding:40px max(5vw,16px);border-top:1px solid var(--line);color:var(--m
   const upd = () => {
     freebox.hidden = f.amt.value !== "free";
     const n = amount();
-    sum.textContent = (f.kind.value === "month" ? "毎月" : "1回だけ") + "・" + (n ? n.toLocaleString("ja-JP") + "円" : "金額を入力してください");
+    sum.textContent = (n ? n.toLocaleString("ja-JP") + "円" : "金額を入力してください");
   };
   f.addEventListener("change", upd); freeamt.addEventListener("input", upd); upd();
   f.addEventListener("submit", e => {
