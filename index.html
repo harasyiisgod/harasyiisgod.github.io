@@ -89,6 +89,15 @@ details p{margin:0 0 16px;color:var(--mute)}
 .btn:disabled{opacity:.45;cursor:not-allowed}
 button.btn{border:0;font:700 16px "M PLUS 1p",sans-serif;cursor:pointer}
 @media(max-width:820px){.sup{grid-template-columns:minmax(0,1fr)}}
+.log{display:grid;gap:12px;max-height:340px;overflow-y:auto;padding-right:4px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chips button{min-height:40px;padding:0 14px;border-radius:999px;border:1.5px solid var(--line);background:transparent;color:var(--ink);font:500 14px "M PLUS 1p",sans-serif;cursor:pointer}
+.chips button:hover{border-color:var(--mint);color:var(--mint)}
+.ask{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}
+.ask input{font:16px "M PLUS 1p",sans-serif;min-height:48px;padding:0 14px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg2);color:var(--ink)}
+.ask input:focus-visible,.chips button:focus-visible{outline:3px solid var(--glow);outline-offset:2px}
+.bub a{color:var(--mint);word-break:break-all}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 footer{padding:40px max(5vw,16px);border-top:1px solid var(--line);color:var(--mute);font-size:13px;text-align:center}
 @media(max-width:820px){.hero .wrap,.jv{grid-template-columns:minmax(0,1fr)}.fig{order:-1;aspect-ratio:4/3}.stations,.feat,.devs{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:600px){.sched li{grid-template-columns:minmax(0,1fr);gap:0}nav{gap:0 14px}}
@@ -217,13 +226,20 @@ footer{padding:40px max(5vw,16px);border-top:1px solid var(--line);color:var(--m
   <div class="wrap jv">
     <div>
       <h2>案内役 ジャービス</h2>
-      <p style="color:var(--mute);margin:0">分からないことがあれば、ジャービスが丁寧にお答えします。Discordとこのページから話しかけられるよう、ただいま準備中です。</p>
+      <p style="color:var(--mute);margin:0">分からないことがあれば、ジャービスが丁寧にお答えします。下の欄に質問を入れるか、よくある質問のボタンを押してください。</p>
     </div>
-    <div class="chat" aria-label="ジャービスとの会話の例">
-      <div class="bub u">サーバーにはどうやって入るの？</div>
-      <div class="bub j"><b>ジャービス</b>ご参加ありがとうございます。お使いの機種によって入り方が異なりますので、「Switchの入り方」のように機種名を添えてお尋ねください。</div>
-      <p class="note" style="margin:0">会話の例です。</p>
+    <div class="chat">
+      <div class="log" id="jvlog" aria-live="polite">
+        <div class="bub j"><b>ジャービス</b>こんにちは。Aeon's Path の案内役、ジャービスでございます。何なりとお尋ねください。</div>
+      </div>
+      <div class="chips" id="jvchips"></div>
+      <form class="ask" id="jvform">
+        <label for="jvq" class="vh">ジャービスに質問</label>
+        <input id="jvq" autocomplete="off" maxlength="200" placeholder="例：Switchの入り方">
+        <button class="btn p" type="submit">送る</button>
+      </form>
     </div>
+  </div>
   </div>
 </section>
 
@@ -317,6 +333,132 @@ footer{padding:40px max(5vw,16px);border-top:1px solid var(--line);color:var(--m
     s += `<circle cx="${x}" cy="${y}" r="${r}" fill="#e6f4f1" opacity="${(0.4 + rnd() * 0.6).toFixed(2)}"${tw}/>`;
   }
   g.innerHTML = s;
+  // ---- ジャービス（ホームページ版） ----
+  // ジャービスの知識。k＝反応する言葉、a＝答え。{REG}{DC}{HP} はリンクに置き換わる
+  const JV_LINKS = {
+    REG: "https://form.jotform.com/263265687567070",
+    DC: "https://discord.gg/nVHm3CErH",
+    HP: "https://harasyiisgod.github.io"
+  };
+  const JV_FAQ = [
+    { k: ["こんにちは", "こんばんは", "おはよう", "はじめまして", "やあ", "hello", "hi"],
+      a: "こんにちは。Aeon's Path の案内役、ジャービスでございます。参加方法、遊び方、不具合の報告など、何なりとお尋ねください。" },
+    { k: ["ジャービス", "だれ", "誰", "あなた", "ai", "人間", "ボット", "bot"],
+      a: "私は Aeon's Path の案内役、ジャービスと申します。決まったご質問にお答えするプログラムでございます。お答えできないことは、Discordで運営の方へおつなぎいたします。" },
+    { k: ["switch", "スイッチ", "ps4", "ps5", "プレステ", "playstation", "xbox", "ゲーム機", "コンソール"],
+      a: "ゲーム機からもご参加いただけます。ただしゲーム機には「サーバー追加」ボタンがないため、専用の入り方をご用意する予定です。手順はリリース前にホームページとDiscordでお知らせいたします。" },
+    { k: ["スマホ", "pc", "パソコン", "iphone", "android", "タブレット", "windows"],
+      a: "PC・スマホの方は、「遊ぶ」→「サーバー」→「サーバーを追加」から、お知らせするアドレスとポートを入力してご参加ください。アドレスはリリースが近づきましたらお知らせいたします。" },
+    { k: ["入れない", "接続できない", "繋がらない", "つながらない", "エラー", "ログインできない"],
+      a: "ご不便をおかけして申し訳ございません。①マイクラが最新版か、②アドレスとポートに入力ミスがないか、③ゲーム機の場合はオンライン加入サービスに入っているか、をご確認ください。それでも入れない場合は、機種とエラー文を添えてDiscordでお知らせください。" },
+    { k: ["入り方", "入る", "参加方法", "参加したい", "ip", "アドレス", "ポート", "サーバー"],
+      a: "ご参加ありがとうございます。お使いの機種によって入り方が異なります。「Switchの入り方」「スマホの入り方」のように、機種名を添えてお尋ねください。サーバーのアドレスはリリースが近づきましたらお知らせいたします。" },
+    { k: ["満員", "何人", "人数", "上限"],
+      a: "同時に入れる人数には上限がございます。満員の際は、少し時間をおいてお試しください。人数が多い場合は、参加の順番を抽選で決めることもございます。" },
+    { k: ["事前登録", "抽選", "登録"],
+      a: "事前登録はこちらから受け付けております：{REG}　リリースのお知らせや参加方法をいち早くお届けいたします。" },
+    { k: ["無料", "タダ", "料金", "お金かかる", "値段"],
+      a: "Aeon's Path は無料でお遊びいただけます。ゲーム機でのオンラインプレイには、各機種のオンライン加入サービスが必要な場合がございます。" },
+    { k: ["第三章", "3章", "三章", "第二章", "2章", "二章", "続き", "新章"],
+      a: "第三章「終着駅の先へ」はただいま制作中でございます。公開日が決まりましたら、ホームページとDiscordでお知らせいたします。" },
+    { k: ["いつ", "リリース", "開始", "公開日", "始まる"],
+      a: "正式リリースは2027年1月1日を予定しております。12月15日には紹介動画を公開し、その後もショート動画を毎日お届けする予定です。" },
+    { k: ["ラグ", "重い", "カクつく", "カクカク", "遅い", "落ちる"],
+      a: "ご迷惑をおかけしております。演出の多い場面では、機種によって動作が重くなることがございます。描画距離を下げると改善する場合がございます。続くようでしたら、時間帯と場所を添えてDiscordでお知らせください。" },
+    { k: ["初心者", "最初", "はじめて", "初めて", "何をすれば", "なにすれば", "始め方"],
+      a: "ようこそいらっしゃいました。まずは物語に沿って進めていただければ、自然と遊び方が身につくようになっております。分からないことがあれば、いつでも私にお尋ねください。" },
+    { k: ["どんなゲーム", "ストーリー", "物語", "世界観", "列車", "銀河"],
+      a: "Aeon's Path は、列車に乗っていくつもの銀河を旅する、物語が続いていくアクションRPGでございます。章ごとに新しい世界とボスが待っております。" },
+    { k: ["セーブ", "セーブデータ", "キャラ", "作り直し", "データ"],
+      a: "お一人につき3つまでセーブデータをお使いいただけます。切り替えは「旅の列車」の中にあるメニューの「セーブデータ」から行えます。ボス戦や遊戯台で遊んでいる最中は切り替えられませんので、列車に戻ってからお試しください。" },
+    { k: ["会心", "クリティカル", "金色", "光"],
+      a: "金色の光が見えたタイミングで攻撃すると、強い一撃になります。焦らず光を待つのがコツでございます。" },
+    { k: ["レベル", "経験値", "xp", "レベル上げ", "稼ぎ"],
+      a: "敵を倒す、街の依頼をこなす、ボスに再挑戦する、などで経験値が得られます。遊戯場でも、わずかですが経験値が入ります。" },
+    { k: ["ボス", "強い", "勝てない", "倒せない", "難しい"],
+      a: "お疲れさまでございます。レベル上げや装備・遺物の見直しのほか、ほかのプレイヤーと協力するのも有効でございます。攻撃の前には予兆がございますので、よく見て避けてみてください。" },
+    { k: ["遺物", "星", "ランク", "レア"],
+      a: "遺物は能力を高める装備品で、星の数が多いほど強力でございます。高い星の遺物は、再戦の門で難易度を上げて挑むと手に入りやすくなります。" },
+    { k: ["持ち物", "いっぱい", "素材", "保管庫", "インベントリ", "かさばる"],
+      a: "素材は「素材保管庫」に預けることができます。ステータスメニューから開けます。自動で預ける設定も、保管庫の画面で切り替えられます。" },
+    { k: ["再戦", "門", "難易度", "周回"],
+      a: "再戦の門は、一度倒したボスに再び挑める場所でございます。難易度は1〜5から選べ、上げるほど敵は強くなりますが、報酬や遺物の星も良くなります。高い難易度は、レベル上限を上げると選べるようになります。" },
+    { k: ["星占い", "スピカ", "占い", "天文台"],
+      a: "第二章をクリアすると、天文台のスピカが毎日の星占いをしてくれます。一日一回、ぜひ話しかけてみてください。" },
+    { k: ["スロット", "目押し", "パチンコ", "push", "遊戯", "カジノ"],
+      a: "スロットはスニーク（シフト）でリールを止める「目押し」ができます。パチンコは画面に「PUSH」が光ったらスニークで押してください。台から離れると、その回は自動で終了し、賭けた分はお返しいたします。使うのはゲーム内の通貨のみでございます。" },
+    { k: ["友達", "一緒", "マルチ", "協力", "フレンド"],
+      a: "同じサーバーで、お友達と一緒に冒険していただけます。" },
+    { k: ["バグ", "不具合", "おかしい", "報告"],
+      a: "ご報告ありがとうございます。Discordの報告チャンネルに、①起きたこと、②場所、③機種、④できればスクリーンショットを添えてお送りください。{DC}" },
+    { k: ["消えた", "なくなった", "戻った", "ロールバック", "巻き戻"],
+      a: "ご迷惑をおかけして申し訳ございません。いつ頃・何をしていたときかを添えて、Discordでお知らせください。運営が確認いたします。{DC}" },
+    { k: ["荒らし", "チート", "通報", "迷惑", "ルール", "ban"],
+      a: "お知らせいただきありがとうございます。相手の名前、日時、できればスクリーンショットを添えて、Discordで運営へお送りください。{DC}" },
+    { k: ["アップデート", "予定", "ロードマップ", "お知らせ", "最新"],
+      a: "最新情報はDiscordのお知らせチャンネルとホームページでお伝えしております。{HP}" },
+    { k: ["配布", "ダウンロード", "自分のワールド", "mcaddon", "アドオン"],
+      a: "申し訳ございませんが、Aeon's Path はサーバーでのみお遊びいただける形にしており、アドオンの配布は行っておりません。" },
+    { k: ["課金", "支援", "募金", "寄付", "メンバーシップ", "カンパ"],
+      a: "Aeon's Path は個人で運営しております。サーバー維持費のためのご支援は、ホームページのメンバーシップから受け付けております。ご支援は任意で、ゲーム内の強さや遊べる内容が変わることはございません。{HP}" },
+    { k: ["discord", "ディスコ", "ディスコード", "鯖"],
+      a: "Discordサーバーはこちらでございます：{DC}" },
+    { k: ["ホームページ", "サイト", "hp", "公式"],
+      a: "公式ホームページはこちらでございます：{HP}" },
+    { k: ["ありがとう", "サンキュー", "助かった", "thanks"],
+      a: "どういたしまして。旅のお役に立てて光栄でございます。" }
+  ];
+  const JV_FALLBACK = "申し訳ございません、そのご質問にはまだお答えできません。Discordでお尋ねいただければ、運営やほかのプレイヤーの方がお答えいたします。{DC}";
+
+  // 質問に一番合う答えを返す
+  function jvAnswer(q) {
+    const norm = s => s.toLowerCase().normalize("NFKC")
+      .replace(/[ァ-ヶ]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x60))
+      .replace(/[\s　、。！？!?・]/g, "");
+    const nq = norm(q || "");
+    let best = null, score = 0;
+    for (const f of JV_FAQ) {
+      let s = 0;
+      for (const k of f.k) { const nk = norm(k); if (nk && nq.includes(nk)) s += nk.length; }
+      if (s > score) { score = s; best = f; }
+    }
+    const t = best ? best.a : JV_FALLBACK;
+    return t.replace(/\{(\w+)\}/g, (_, n) => JV_LINKS[n] || "");
+  }
+  const jlog = document.getElementById("jvlog"), jq = document.getElementById("jvq");
+  const esc = t => t.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const linkify = t => esc(t).replace(/https:\/\/[^\s　]+/g, u => `<a href="${u}">${u}</a>`);
+  const say = (who, text) => {
+    const d = document.createElement("div");
+    d.className = "bub " + who;
+    d.innerHTML = who === "j" ? "<b>ジャービス</b>" + linkify(text) : esc(text);
+    jlog.appendChild(d); jlog.scrollTop = jlog.scrollHeight;
+  };
+  // AI版ジャービスの住所（Cloudflare Worker の URL ＋ /chat）。空のときは決まった答えで返す
+  const JV_API = "https://jarvis.haihuiyuandao.workers.dev/chat";
+  let busy = false;
+  const ask = async q => {
+    q = q.trim(); if (!q || busy) return;
+    busy = true; say("u", q);
+    const wait = document.createElement("div");
+    wait.className = "bub j"; wait.innerHTML = "<b>ジャービス</b>考えております……";
+    jlog.appendChild(wait); jlog.scrollTop = jlog.scrollHeight;
+    let a = "";
+    if (JV_API) {
+      try {
+        const r = await fetch(JV_API, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ q }) });
+        if (r.ok) a = (await r.json()).a || "";
+      } catch (e) {}
+    } else await new Promise(r => setTimeout(r, 250));
+    wait.remove();
+    say("j", a || jvAnswer(q));
+    busy = false;
+  };
+  document.getElementById("jvform").addEventListener("submit", e => { e.preventDefault(); ask(jq.value); jq.value = ""; });
+  const chips = ["サーバーの入り方", "Switchから遊べる？", "無料？", "いつリリース？", "バグを見つけた"];
+  const cbox = document.getElementById("jvchips");
+  cbox.innerHTML = chips.map(c => `<button type="button">${c}</button>`).join("");
+  cbox.addEventListener("click", e => { if (e.target.tagName === "BUTTON") ask(e.target.textContent); });
 }
 </script>
 </body>
